@@ -99,6 +99,12 @@ async function run() {
         const result = await bookingCollection.find(query).toArray();
         res.send(result)
     })
+    app.get('/bookingLists/:email',async(req,res)=>{
+      const email = req.params.email
+      const query = {email : email};
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    })
     // ---------------------- reviews --------------------
     app.post('/reviews', async(req,res)=>{
         const review = req.body;
