@@ -100,10 +100,17 @@ async function run() {
         res.send(result)
     })
     // ---------------------- reviews --------------------
-    app.post('/reviews',async(req,res)=>{
+    app.post('/reviews', async(req,res)=>{
         const review = req.body;
+        console.log(review);
         const result = await reviewCollection.insertOne(review);
+        console.log(result);     
         res.send(result);
+    })
+    app.get('/reviews',async(req,res)=>{
+      const query = req.query;
+      const result = await reviewCollection.find(query).toArray();
+      res.send(result);
     })
       // Send a ping to confirm a successful connection
       await client.db("admin").command({ ping: 1 });
