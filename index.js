@@ -105,6 +105,25 @@ async function run() {
       const result = await bookingCollection.find(query).toArray();
       res.send(result);
     })
+    app.patch('/booking/:id',async(req,res)=>{
+      const id = req.params.id  
+      const filter = {_id: new ObjectId(id)}
+      const updatedStatus = req.body.status
+      const updatedDoc = {
+        $set:{
+             status:updatedStatus,
+            }
+       }
+      const result = await bookingCollection.updateOne(filter,updatedDoc)
+      res.send(result)
+      }
+    )
+    app.delete('/booking/:id',async(req,res)=>{
+      const id = req.params.id 
+      const query = {_id: new ObjectId(id)}
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result)
+    })
     // ---------------------- reviews --------------------
     app.post('/reviews', async(req,res)=>{
         const review = req.body;
