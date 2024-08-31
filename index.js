@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const app  = express();
 const cors = require('cors');
-
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 3002;
 
 // MIDDLE WARE 
@@ -31,6 +31,28 @@ async function run() {
       const bookingCollection = client.db(database).collection("bookings");
       const reviewCollection = client.db(database).collection('reviews')
 
+
+      // jwt token 
+       app.post('/jwt', async(req,res)=>{
+        const data = req.body;
+        const token = jwt.sign({data:data},process.env.JWT_SECRET,{expiresIn:'1h'});
+        res.send({token:token});
+       })
+       // verify token 
+       const verifyToken = async(req,res,next)=>{
+        console.log(!req.headers.authorization);
+        if(!req.headers.authorization){
+          return res.status(401).send({message:"unauthorized access"})
+        }
+        const token = req.headers.authorization.split(' ')[1] ;
+        jwt.verify(token, process.env.JWT_SECRET,(err,decoded)=>{
+          if(err){
+           return res.status(401).send({message:"unauthorized access"})
+          }
+          req.decoded= decoded
+          next();
+        })
+       }
       // user related api
         // ---------------------user-------------------
       app.post('/user', async (req,res)=>{
@@ -70,7 +92,7 @@ async function run() {
         
       })
     //  ---------------------- services --------------------
-      app.post('/services', async(req,res)=>{
+      app.post('/services',verifyToken, async(req,res)=>{
       const newService = req.body;
       const result = await servicesCollection.insertOne(newService);
       res.send(result);
