@@ -4,7 +4,7 @@ const app  = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 3002;
-
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // MIDDLE WARE 
 app.use(express.json());
 app.use(cors());
@@ -30,7 +30,7 @@ async function run() {
       const userCollection = client.db(database).collection("users")
       const bookingCollection = client.db(database).collection("bookings");
       const reviewCollection = client.db(database).collection('reviews')
-
+const paymentCollection = client.db(database).collection('payments')
 
       // jwt token 
        app.post('/jwt', async(req,res)=>{
@@ -159,6 +159,46 @@ async function run() {
       const result = await reviewCollection.find(query).toArray();
       res.send(result);
     })
+    // -----------------------stripe card  payment----------------
+    app.post('/create-payment-intent',async(req,res)=>{
+      console.log('req.body',req.body)
+      const price = req.body.price
+      if(price > 0){
+        const amount = parseInt(price*100)
+        const paymentIntent= await stripe.paymentIntents.create({
+          amount:amount,
+          currency:'CAD',
+          payment_method_types:['card']
+  
+        })
+        res.send({clientSecret:paymentIntent.client_secret})
+      }
+      else{
+        res.status(400).send({message:'amount must be greater than 0'})
+      }
+   
+    })
+     app.post("/paymentHistory", async(req,res)=>{
+      const payment = req.body;
+      const insertedPayment = await paymentCollection.insertOne(payment);
+      const query = {
+        _id:{
+          $in: payment.services.map(id=> new ObjectId(id))
+          }    
+        }
+      const deletedBookings = await bookingCollection.deleteMany(query)
+      res.send({insertedPayment,deletedBookings})
+     })
+     app.get('/paymentHistory/:email', async(req,res)=>{
+      const query = {email: req.params.email};
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+      
+     })
+
+
+
+
       // Send a ping to confirm a successful connection
       await client.db("admin").command({ ping: 1 });
       console.log("Pinged your deployment. You successfully connected to MongoDB!");
