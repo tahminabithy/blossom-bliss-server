@@ -24,13 +24,13 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
       // Connect the client to the server	(optional starting in v4.7)
-      await client.connect();
+      // await client.connect();
       const database = "blossomBlissDb"
       const servicesCollection = client.db(database).collection("services")
       const userCollection = client.db(database).collection("users")
       const bookingCollection = client.db(database).collection("bookings");
       const reviewCollection = client.db(database).collection('reviews')
-const paymentCollection = client.db(database).collection('payments')
+      const paymentCollection = client.db(database).collection('payments')
 
       // jwt token 
        app.post('/jwt', async(req,res)=>{
@@ -40,16 +40,19 @@ const paymentCollection = client.db(database).collection('payments')
        })
        // verify token 
        const verifyToken = async(req,res,next)=>{
-        console.log(!req.headers.authorization);
+        console.log(req.headers.authorization);
         if(!req.headers.authorization){
           return res.status(401).send({message:"unauthorized access"})
         }
         const token = req.headers.authorization.split(' ')[1] ;
+        console.log(token);
         jwt.verify(token, process.env.JWT_SECRET,(err,decoded)=>{
           if(err){
            return res.status(401).send({message:"unauthorized access"})
           }
           req.decoded= decoded
+          console.log("decoded",decoded);
+          
           next();
         })
        }
@@ -58,9 +61,8 @@ const paymentCollection = client.db(database).collection('payments')
       app.post('/user', async (req,res)=>{
         const user = req.body;
         const query = {email: user.email};
+        console.log("user",user);
         const existingUser = await userCollection.findOne(query)
-        console.log(existingUser);
-        
         if(existingUser){
             return res.send({ message: 'user already exists', insertedId: null })
         }    
@@ -72,15 +74,17 @@ const paymentCollection = client.db(database).collection('payments')
         const result = await userCollection.find(query).toArray();
         res.send(result);
       })
-      app.get('/user/:email',async(req,res)=>{
+      app.get('/user/:email', async(req,res)=>{
         const email = req.params.email;
+        console.log("paisi",req.params.email);
         const query = {email: email};
         const result = await userCollection.findOne(query);
+        console.log("result",result);
         res.send(result);
       })
       app.patch('/user/admin/:email',async(req,res)=>{
        const email = req.params.email;
-       const filter = {email : email};
+       const filter = {email: email};
        const updatedDoc = {
         $set: {
           role: 'admin'
@@ -200,7 +204,7 @@ const paymentCollection = client.db(database).collection('payments')
 
 
       // Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
+      // await client.db("admin").command({ ping: 1 });
       console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
       // Ensures that the client will close when you finish/error
@@ -217,7 +221,3 @@ app.get('/',(req,res)=>{
 app.listen(port, ()=>{
     console.log(`server is running on port ${port}`)
 })
-
-// blossom_bliss_parlour_DB
-
-// 3x8v5eypxy1axrT5
